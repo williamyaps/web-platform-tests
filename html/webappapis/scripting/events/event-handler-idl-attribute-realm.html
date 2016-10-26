@@ -34,6 +34,7 @@ async_test(t => {
   window.onload = t.step_func(() => {
     windowProxy.onerror = t.step_func_done(ev => {
       assert_equals(ev.error.constructor.name, "SyntaxError");
+      // TODO remove me; just poking it to get it to re-deploy to /submissions/
     });
 
     const oldDocument = windowProxy.document;
