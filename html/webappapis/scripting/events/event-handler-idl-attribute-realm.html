@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<title>Event handler IDL attribute realm</title>
+<link rel="help" href="https://html.spec.whatwg.org/multipage/webappapis.html#getting-the-current-value-of-the-event-handler">
+<link rel="author" title="Domenic Denicola" href="mailto:d@domenic.me">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+
+<iframe></iframe>
+<iframe></iframe>
+
+<iframe id="navigate-me" src="event-handler-idl-attribute-realm-support-1.html"></iframe>
+
+<script>
+"use strict";
+
+test(() => {
+  const frame0Document = frames[0].document.documentElement;
+  const frame1Body = frames[1].document.body;
+
+  frame1Body.setAttribute("onclick", "void(0)");
+  frame0Document.appendChild(frame1Body);
+  const get = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "onclick").get;
+  const f = get.call(frame1Body);
+
+  assert_false(f instanceof Function, "The function must not be created in the parent frame's global");
+  assert_true(f instanceof frames[0].Function, "The function must be created in the element's document's global");
+  assert_false(f instanceof frames[1].Function, "The function must not be created in the element's global");
+}, "Event handler IDL attributes must return a function from the element's document's realm");
+
+async_test(t => {
+  const iframe = document.querySelector("#navigate-me");
+  const windowProxy = iframe.contentWindow;
+
+  window.onload = t.step_func(() => {
+    windowProxy.onerror = t.step_func_done(ev => {
+      console.log(ev);
+      // TODO some asserts
+    });
+
+    const oldDocument = windowProxy.document;
+    iframe.addEventListener("load", t.step_func(() => {
+      const newDocument = windowProxy.document;
+      assert_not_equals(oldDocument, newDocument, "Sanity check: navigation changed the document");
+      assert_equals(windowProxy.onerror, null, "Sanity check: after navigation reset onerror");
+
+      windowProxy.onerror = t.unreached_func("The post-navigation onerror must not be called");
+
+      newDocument.body.setAttribute("onclick", "1 *-* 'syntax error'");
+      const onclick = newDocument.body.onclick;
+
+      assert_equals(onclick, null, "Attempting to compile a syntax error must give null");
+    }));
+    windowProxy.location.href = "event-handler-idl-attribute-realm-support-2.html";
+  });
+}, "Event handler IDL attribute compilation errors should be reported to the document's global");
+</script>
