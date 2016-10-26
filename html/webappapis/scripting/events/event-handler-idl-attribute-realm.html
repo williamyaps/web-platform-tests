@@ -33,8 +33,7 @@ async_test(t => {
 
   window.onload = t.step_func(() => {
     windowProxy.onerror = t.step_func_done(ev => {
-      console.log(ev);
-      // TODO some asserts
+      assert_equals(ev.error.constructor.name, "SyntaxError");
     });
 
     const oldDocument = windowProxy.document;
@@ -45,8 +44,8 @@ async_test(t => {
 
       windowProxy.onerror = t.unreached_func("The post-navigation onerror must not be called");
 
-      newDocument.body.setAttribute("onclick", "1 *-* 'syntax error'");
-      const onclick = newDocument.body.onclick;
+      oldDocument.body.setAttribute("onclick", "1 *-* 'syntax error'");
+      const onclick = oldDocument.body.onclick;
 
       assert_equals(onclick, null, "Attempting to compile a syntax error must give null");
     }));
