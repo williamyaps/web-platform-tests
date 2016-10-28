@@ -537,7 +537,7 @@ def main():
                 with open(full_filename, "r") as fh:
                     file_contents = fh.read()
                     if support_filename in file_contents:
-                        files_changed.append(full_filename)
+                        files_changed.append("/%s" % full_filename)
 
     browser = browser_cls(args.gh_token)
 
